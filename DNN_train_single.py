@@ -11,18 +11,18 @@ import torchnet
 import argparse
 import logging
 from torch.autograd import Variable
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler,MinMaxScaler
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset,DataLoader,TensorDataset
 
-batch_size=300
+batch_size=256
 epochs=200
 t_loss=0
 v_loss=0
 WORKERS=0
-LEARNING_RATE=0.001
-f1='data/processed/input/1_slope_processed_5948_input.txt'
-f2='data/processed/output/1_slope_processed_5948_output.txt'
+LEARNING_RATE=0.0005
+f1='data/input/1_slope_input.txt'
+f2='data/output/1_slope_output.txt'
 x=[]
 y=[]
 # read data from files
@@ -43,6 +43,7 @@ with open(f1,"r") as filestream:
         for j in range(34):
             a.append(float(currentline[j]))
         x.append(a)
+    x.pop()
 with open(f2,"r") as filestream:
     for line in filestream:
         b=[]
@@ -57,16 +58,21 @@ print(np.array(x).shape,np.array(y).shape)
 x_train_pri, x_test_pri, y_train_pri, y_test_pri = train_test_split(x, y, test_size = 0.2)
 
 # data standalization
-scaler = StandardScaler()
-x_mean=np.mean(x_train_pri,axis=0)
-x_std=np.std(x_train_pri,axis=0)
-y_mean=np.mean(y_train_pri,axis=0)
-y_std=np.std(y_train_pri,axis=0)
+scaler = MinMaxScaler()
+# x_mean=np.mean(x_train_pri,axis=0)
+# x_std=np.std(x_train_pri,axis=0)
+# y_mean=np.mean(y_train_pri,axis=0)
+# y_std=np.std(y_train_pri,axis=0)
+x_min=np.min(x_train_pri,axis=0)
+x_max=np.max(x_train_pri,axis=0)
+y_min=np.min(y_test_pri,axis=0)
+y_max=np.max(y_test_pri,axis=0)
 #print(x_mean[0],x_std[0],y_mean[0],y_std[0])
+#print(x_min[0],x_max[0],y_min[0],y_max[0])
 X_train = scaler.fit_transform(x_train_pri)
 X_test=scaler.transform(x_test_pri)
 #print(x_test_pri[0][1])
-#print((x_test_pri[0][1]-x_mean[1])/x_std[1])
+#print((x_test_pri[0][1]-x_min[1])/(x_max[1]-x_min[1]))
 #print(X_test[0][1])
 Y_train = scaler.fit_transform(y_train_pri)
 Y_test=scaler.transform(y_test_pri)
@@ -181,8 +187,8 @@ def printfigure():
     plt.show()
 
 # train,test,save the model,save the log
-logger = get_logger('model/slope/exp1.log')
-model_dir='model/slope/'
+logger = get_logger('model_single_test/slope_single_test/exp1_single_test.log')
+model_dir='model_single_test/slope_single_test/'
 if __name__=="__main__":
     logger.info('start training!')
     for epoch in range(1, epochs + 1):
@@ -194,9 +200,23 @@ if __name__=="__main__":
     logger.info('finish training!')
     printfigure()
 
-model_dir='model/slope/200_epoch.pth'
+model_dir='model_single_test/slope_single_test/200_epoch.pth'
 checkpoint = torch.load(model_dir)
 model.load_state_dict(checkpoint['model'])
 optimizer.load_state_dict(checkpoint['optimizer'])
 epochs = checkpoint['epoch']
-#test()
+'''
+test()
+print(x_train_pri[0])
+print(y_train_pri[0])
+print(X_train[0])
+print(Y_train[0])
+print('y_min',y_min)
+print('y_max',y_max)
+data=model(torch.tensor(X_train[0]).to(torch.float32)).tolist()
+data1=[]
+for k in range(12):
+    tmp=data[k]*(y_max[k]-y_min[k])+y_min[k]
+    data1.append(tmp)
+print(data1)
+'''

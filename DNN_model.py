@@ -11,7 +11,11 @@ class DNN(nn.Module):
             nn.Linear(256, 256),
             nn.ReLU(True),
             nn.Dropout(0.1),
-            nn.Linear(256, 12))
+            nn.Linear(256,256),
+            nn.ReLU(True),
+            nn.Dropout(0.1),
+            nn.Linear(256, 12),
+            nn.Tanh())
 
     def forward(self, x):
         return self.m(x)
