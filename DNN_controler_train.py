@@ -15,14 +15,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset,DataLoader,TensorDataset
 
-batch_size=300
+batch_size=64
 epochs=200
 t_loss=0
 v_loss=0
 WORKERS=0
 LEARNING_RATE=0.001
-f1='data/processed/input/1_slope_processed_5948_input.txt'
-f2='data/processed/output/1_slope_processed_5948_output.txt'
+f1='data/input/2_plane_input.txt'
+f2='data/output/2_plane_output.txt'
 x=[]
 y=[]
 # read data from files
@@ -43,6 +43,7 @@ with open(f1,"r") as filestream:
         for j in range(34):
             a.append(float(currentline[j]))
         x.append(a)
+    x.pop()
 with open(f2,"r") as filestream:
     for line in filestream:
         b=[]
@@ -55,7 +56,11 @@ print(np.array(x).shape,np.array(y).shape)
 
 # train-test split
 x_train_pri, x_test_pri, y_train_pri, y_test_pri = train_test_split(x, y, test_size = 0.2)
-
+X_train=x_train_pri
+Y_train=y_train_pri
+X_test=x_test_pri
+Y_test=y_test_pri
+'''
 # data standalization
 scaler = StandardScaler()
 x_mean=np.mean(x_train_pri,axis=0)
@@ -70,6 +75,7 @@ X_test=scaler.transform(x_test_pri)
 #print(X_test[0][1])
 Y_train = scaler.fit_transform(y_train_pri)
 Y_test=scaler.transform(y_test_pri)
+'''
 
 # transform to tensor
 x_train=torch.tensor(X_train,dtype=torch.float32)
@@ -181,8 +187,8 @@ def printfigure():
     plt.show()
 
 # train,test,save the model,save the log
-logger = get_logger('model/slope/exp1.log')
-model_dir='model/slope/'
+logger = get_logger('model/plane_standard/exp1.log')
+model_dir='model/plane_standard/'
 if __name__=="__main__":
     logger.info('start training!')
     for epoch in range(1, epochs + 1):
@@ -194,7 +200,7 @@ if __name__=="__main__":
     logger.info('finish training!')
     printfigure()
 
-model_dir='model/slope/200_epoch.pth'
+model_dir='model/plane_standard/200_epoch.pth'
 checkpoint = torch.load(model_dir)
 model.load_state_dict(checkpoint['model'])
 optimizer.load_state_dict(checkpoint['optimizer'])

@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from DNN_model import DNN
+from LSTM_model import LSTM
 import torchnet
 import argparse
 import logging
@@ -56,7 +56,8 @@ with open(f2,"r") as filestream:
             b.append(float(currentline[j]))
         y.append(b)
 print(np.array(x).shape,np.array(y).shape)
-
+x=np.array(x)
+y=np.array(y)
 
 # train-test split
 x_train_pri, x_test_pri, y_train_pri, y_test_pri = train_test_split(x, y, test_size = 0.2)
@@ -81,6 +82,11 @@ X_test=scaler.transform(x_test_pri)
 Y_train = scaler.fit_transform(y_train_pri)
 Y_test=scaler.transform(y_test_pri)
 
+X_train=np.reshape(-1,(32,34))
+X_test=np.reshape(-1,(32,34))
+Y_train=np.reshape(-1,(32,12))
+Y_test=np.reshape(-1,(32,12))
+
 # transform to tensor
 x_train=torch.tensor(X_train,dtype=torch.float32)
 x_test=torch.tensor(X_test,dtype=torch.float32)
@@ -89,6 +95,24 @@ y_test=torch.tensor(Y_test,dtype=torch.float32)
 train_data=TensorDataset(x_train,y_train)
 test_data=TensorDataset(x_test,y_test)
 
+model=LSTM()
+criterion = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
+
+for e in range(1000):
+    var_x = Variable(x_train)
+    var_y = Variable(y_train)
+    # 前向传播
+    out = model(var_x)
+    loss = criterion(out, var_y)
+    # 反向传播
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    if (e + 1) % 100 == 0:  # 每 100 次输出结果
+        print('Epoch: {}, Loss: {:.5f}'.format(e + 1, loss.data[0]))
+'''
 # data loader
 train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=WORKERS)
 test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False, num_workers=WORKERS)
@@ -98,7 +122,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # DNN model
 
 # model and loss function
-model = DNN()
+model = LSTM()
 loss_function = nn.MSELoss()
 if device == 'cuda':
     model.cuda()
@@ -155,11 +179,12 @@ def test():
         %(epoch, loss))#, top1.value()[0]))
     v_loss=loss
     test_loss.append(loss)
-    '''
-    print('[Epoch %2d] Average test loss: %.3f%%\n'#, accuracy: %.2f%%\n'
-        %(epoch, test_loss.value()[0]))#, top1.value()[0]))
-    '''
-
+'''
+    #'''
+    #print('[Epoch %2d] Average test loss: %.3f%%\n'#, accuracy: %.2f%%\n'
+        #%(epoch, test_loss.value()[0]))#, top1.value()[0]))
+    #'''
+'''
 # train logger
 def get_logger(filename, verbosity=1, name=None):
     level_dict = {0: logging.DEBUG, 1: logging.INFO, 2: logging.WARNING}
@@ -188,11 +213,11 @@ def printfigure():
     plt.ylabel('loss')
     plt.legend()
     plt.title('judge overfitting')
-    plt.savefig('fig/loss.png')
+    plt.show()
 
 # train,test,save the model,save the log
-logger = get_logger('model_single_test/plane_single_test/exp1_single_test.log')
-model_dir='model_single_test/plane_single_test/'
+logger = get_logger('model_single_test/plane_single_lstm/exp1_single_test.log')
+model_dir='model_single_test/plane_single_lstm/'
 if __name__=="__main__":
     logger.info('start training!')
     for epoch in range(1, epochs + 1):
@@ -203,12 +228,13 @@ if __name__=="__main__":
         torch.save(state, model_dir+str(epoch)+'_epoch.pth')
     logger.info('finish training!')
     printfigure()
+'''
+# model_dir='model_single_test/plane_single_lstm/200_epoch.pth'
+# checkpoint = torch.load(model_dir)
+# model.load_state_dict(checkpoint['model'])
+# optimizer.load_state_dict(checkpoint['optimizer'])
+# epochs = checkpoint['epoch']
 
-model_dir='model_single_test/plane_single_test/200_epoch.pth'
-checkpoint = torch.load(model_dir)
-model.load_state_dict(checkpoint['model'])
-optimizer.load_state_dict(checkpoint['optimizer'])
-epochs = checkpoint['epoch']
 '''
 test()
 print(x_train_pri[0])

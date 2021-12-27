@@ -7,13 +7,15 @@ class DNN(nn.Module):
 
         self.m = nn.Sequential(
             nn.Linear(34, 256),
-            nn.ReLU(True),
+            nn.LeakyReLU(True),
             nn.Linear(256, 256),
-            nn.ReLU(True),
-            nn.Dropout(0.1),
+            #nn.BatchNorm1d(256),
+            nn.LeakyReLU(True),
+            #nn.Dropout(0.15),
             nn.Linear(256,256),
-            nn.ReLU(True),
-            nn.Dropout(0.1),
+            #nn.BatchNorm1d(256),
+            nn.LeakyReLU(True),
+            nn.Dropout(0.15),
             nn.Linear(256, 12),
             nn.Tanh())
 

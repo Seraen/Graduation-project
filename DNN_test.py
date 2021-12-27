@@ -119,16 +119,17 @@ def read_robot_state_input(quad):
 
 
 output_dnn=[-0.006117,0.910351,-1.794465,-0.001334,0.924109,-1.888115,0.005445,0.913908,-1.864504,0.002785,0.888801,-1.77652]
+input_dnn=[0.0,0.0,0.0,1.0,-0.000547,-0.005574,0.081215,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.9,-1.8,0.0,0.9,-1.8,0.0,0.9,-1.8,0.0,0.9,-1.8]
 robot_runner = robot_controller(1)
 cnt=0
 while (1):
 	cnt+=1
 	print(cnt)
-	if cnt<1500:
+	if cnt<300:
 		with open("mocap.txt", "r") as filestream:
 			for line in filestream:
 				cnt+=1
-				if cnt>1500:
+				if cnt>300:
 					break
 				maxForce = p.readUserDebugParameter(maxForceId)
 				currentline = line.split(",")
@@ -138,8 +139,8 @@ while (1):
 				for j in range(12):
 					targetPos = float(joints[j])
 					p.setJointMotorControl2(quadruped, jointIds[j], p.POSITION_CONTROL, targetPos, force=maxForce)
-				input_dnn=read_robot_state_input(quadruped)
 				p.stepSimulation()
+				input_dnn = read_robot_state_input(quadruped)
 				for lower_leg in lower_legs:
 					# print("points for ", quadruped, " link: ", lower_leg)
 					pts = p.getContactPoints(quadruped, -1, lower_leg)
@@ -149,13 +150,20 @@ while (1):
 				time.sleep(1. / 500.)
 
 	else:
+		robot_joints_pos=[]
 		maxForce = p.readUserDebugParameter(maxForceId)
+		print('input_dnn',input_dnn)
+		print('output_dnn',output_dnn)
+		output_dnn = get_dnn_output(input_dnn)
 		for j_ind in range(12):
 			targetPos = output_dnn[j_ind]
 			p.setJointMotorControl2(quadruped, jointIds[j_ind], p.POSITION_CONTROL, targetPos, force=maxForce)
 		p.stepSimulation()
+		for e in range(12):
+			pres_pos = p.getJointState(quadruped, jointIds[e])
+			robot_joints_pos.append(pres_pos[0])
+		print('robot_joints_pos', robot_joints_pos)
 		input_dnn = read_robot_state_input(quadruped)
-		output_dnn = get_dnn_output(input_dnn)
 		for lower_leg in lower_legs:
 			# print("points for ", quadruped, " link: ", lower_leg)
 			pts = p.getContactPoints(quadruped, -1, lower_leg)
